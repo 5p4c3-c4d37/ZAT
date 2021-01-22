@@ -34,6 +34,8 @@ if __name__ == '__main__':
 
         # These domains may be spoofed with a certificate issued by 'Let's Encrypt'
         spoofed_domains = set(['paypal', 'gmail', 'google', 'apple', 'ebay', 'amazon'])
+        
+        # Modification: List out known ioc domains for testing
         ioc_domains = set(['ioc1', 'ioc2', 'ioc3'])
 
         # Run the zeek reader on the x509.log file looking for spoofed domains
@@ -43,7 +45,9 @@ if __name__ == '__main__':
             # Pull out specified fields, i.e. Certificate Issuer
             issuer = row['certificate.issuer']
             subject = row['certificate.subject']
-
+            
+            # Include here other fields necessary for testing
+            
             if "Let's Encrypt" in issuer:
 
                 # Check if the certificate subject has any spoofed domains
@@ -51,14 +55,16 @@ if __name__ == '__main__':
                 if any([domain in subject for domain in spoofed_domains]):
                     print('\n<<< Suspicious Certificate Found >>>')
                     #pprint(row)
-                    spoofed_df = pd.DataFrame.from_dict(row, orient='index')
+                    spoofed_df = pd.DataFrame.from_dict(row, orient='index') # Modified to print as pandas dataframe rather than pyton dict
                     print(spoofed_df)
-                elif any([domain in subject for domain in ioc_domains]):
+                    
+         # Below are modifications from the original script.           
+                elif any([domain in subject for domain in ioc_domains]): # Check against known ioc domains
                     print('\n<<< Suspicious Certificate Found >>>')
                     # pprint(row)
                     ioc_df = pd.DataFrame.from_dict(row, orient='index')
                     print(ioc_df)
-            if issuer == subject:
+            if issuer == subject:  # Check for self-signed certificates
                 print('\n <<< Self-Signed Certificate Found >>>')
                 # pprint(row)
                 selfsigned_df = pd.DataFrame.from_dict(row, orient='index')
