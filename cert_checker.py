@@ -1,4 +1,4 @@
-"""Adapted from ZAT project by Brian Wylie"""
+"""Adapted from ZAT project by Brian Wylie of SuperCowPowers - https://github.com/SuperCowPowers/zat"""
 
 from __future__ import print_function
 import os
