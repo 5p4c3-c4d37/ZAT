@@ -9,6 +9,8 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 `python3 dns_clustering.py [-j] [-a] zeek_log_path`
 
 ## Todo
+- add silhouette scoring to determine "optimal" number of clusters
+- optimize contamination parameter for isolation forest and try out "auto" setting
 - Create script to cluster http.log and cluster anomalies in http.log
 - Develop method to detect base64 encoding or excessively long queries in DNS traffic
     - entropy/regex heuristics to detect base64, cluster based on probability?
