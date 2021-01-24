@@ -23,9 +23,11 @@ def parser():
 
     args = parser.parse_args()
     if args.json_format:
-        print('importing zeek log in json format')
+        print('**Importing zeek log in json format**')
         df = import_json(args.zeek_log_path)
     else:
+        print('**Importing zeek log in ascii format**')
+        print('**If this hangs for longer than a 15 sec, high chance you are trying to import a log in json format instead, use -j**')
         log_to_df = LogToDataFrame()
         df = log_to_df.create_dataframe(args.zeek_log_path)
 
