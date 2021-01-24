@@ -27,7 +27,7 @@ def parser():
         df = import_json(args.zeek_log_path)
     else:
         log_to_df = LogToDataFrame()
-        df = log_to_df.create_dataframe(zeek_log_path)
+        df = log_to_df.create_dataframe(args.zeek_log_path)
 
     return df
 
