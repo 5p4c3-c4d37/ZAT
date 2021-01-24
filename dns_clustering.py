@@ -19,6 +19,7 @@ from sklearn.cluster import KMeans
 def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-j', '--json_format', help='Import zeek log in json string format', action='store_true')
+    parser.add_argument('-a', '--anomaly', help='Perform clustering on predicted anomalies using an isolation forest model', action='store_true')
     parser.add_argument('zeek_log_path', type=str, help='Type in location of zeek log')
 
     args = parser.parse_args()
@@ -27,18 +28,13 @@ def parser():
         df = import_json(args.zeek_log_path)
     else:
         print('**Importing zeek log in ascii format**')
-        print('**If this hangs for longer than a 15 sec, high chance you are trying to import a log in json format instead, use -j**')
+        print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
         log_to_df = LogToDataFrame()
         df = log_to_df.create_dataframe(args.zeek_log_path)
 
-    return df
+    return df, args.anomaly
 
 def import_json(path):
-    '''
-    path = input("Type in the location of the zeek log: ")
-    if path == "":
-        path = "zeek_logs/NASHUA/dns.log"
-    '''
     # list of json strings, each log entry is a string
     with open(path) as json_file:
         lines = json_file.readlines()
@@ -54,7 +50,7 @@ def entropy(string):
     return -sum(count/lns * math.log(count/lns, 2) for count in p.values())
 
 def main():
-    df = parser()
+    df, anomaly = parser()
 
     ######## Preprocessing
 
@@ -72,12 +68,31 @@ def main():
 
     ######## Clustering with KMeans
 
-    # try number of different clusters with silhouette testing
-    num_clusters = min(len(df), 4)
-    df['cluster'] = KMeans(n_clusters=num_clusters).fit_predict(zeek_matrix)
+    if anomaly:
+        ######## Anomaly Classifer
+        # might be worth changing this parameter around to 0.25?
+        # leaving blank allows "auto"... hmmm
+        odd_clf = IsolationForest(contamination=0.2)
+        odd_clf.fit(zeek_matrix)
+        predictions = odd_clf.predict(zeek_matrix)
+        # create new dataframe with predictions added in
+        odd_df = df[features][predictions == -1]
+        # select only those that are anomalous
+        display_df = df[predictions == -1].copy()
+        odd_matrix = to_matrix.fit_transform(odd_df)
+        num_clusters = min(len(odd_df), 4)
+        display_df['cluster'] = KMeans(n_clusters=num_clusters).fit_predict(odd_matrix)
+    else:
+        num_clusters = min(len(df), 4)
+        df['cluster'] = KMeans(n_clusters=num_clusters).fit_predict(zeek_matrix)
 
+    # try number of different clusters with silhouette testing
     features += ['query']
-    cluster_groups = df[features+['cluster']].groupby('cluster')
+
+    if anomaly:
+        cluster_groups = display_df[features+['cluster']].groupby('cluster')
+    else:
+        cluster_groups = df[features+['cluster']].groupby('cluster')
 
     for key, group in cluster_groups:
         print('\nCluster {:d}: {:d} observations'.format(key, len(group)))
