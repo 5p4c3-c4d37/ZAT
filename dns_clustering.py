@@ -82,7 +82,24 @@ def main():
         # select only those that are anomalous
         df = df[predictions == -1].copy()
         zeek_matrix = to_matrix.fit_transform(odd_df)
+
     num_clusters = min(len(df), 4)
+
+    ######## DBScan to pick K
+    df['cluster_db'] = DBSCAN().fit_predict(zeek_matrix)
+    print('Number of Clusters: {:d}'.format(df['cluster_db'].nunique()))
+
+    '''
+    scores = []
+    clusters = range(2, min(len(df), 16))
+    for K in clusters:
+        clusterer = KMeans(n_clusters=K)
+        cluster_labels = clusterer.fit_predict(zeek_matrix)
+        score = silhouette_score(zeek_matrix, cluster_labels)
+        scores.append(score)
+    print(pd.DataFrame({'Num Clusters':clusters, 'Score':scores}))
+    '''
+
     df['cluster'] = KMeans(n_clusters=num_clusters).fit_predict(zeek_matrix)
     # try number of different clusters with silhouette testing
     features += ['query']
