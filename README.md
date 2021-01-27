@@ -19,3 +19,7 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 - Develop method to detect base64 encoding or excessively long queries in DNS traffic
     - entropy/regex heuristics to detect base64, cluster based on probability?
     - long queries should be caught by `dns_cluster.py` if they are relatively longer than other entries
+- `cert_checker_ascii_json.py`
+    - fix the timestamp for json
+- `tor_and_port_count.py`
+    - Add json functionality
