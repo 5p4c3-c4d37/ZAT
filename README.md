@@ -23,3 +23,5 @@ Purpose: Modifying ZAT python scripts for more tailored use.
     - fix the timestamp for json
 - `tor_and_port_count.py`
     - Add json functionality
+- Develop yara/ZAT functionality
+    - see ZAT documentation for examples
