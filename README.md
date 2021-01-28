@@ -16,12 +16,15 @@ Purpose: Modifying ZAT python scripts for more tailored use.
     - optimize contamination parameter for isolation forest and try out "auto" setting
 - `http_clustering.py`
     - Create script to cluster http.log and cluster anomalies in http.log
-- Develop method to detect base64 encoding or excessively long queries in DNS traffic
-    - entropy/regex heuristics to detect base64, cluster based on probability?
-    - long queries should be caught by `dns_cluster.py` if they are relatively longer than other entries
 - `cert_checker_ascii_json.py`
     - fix the timestamp for json
+    - take IOC file as input
 - `tor_and_port_count.py`
-    - Add json functionality
+    - Add timestamps
 - Develop yara/ZAT functionality
     - see ZAT documentation for examples
+- DNS:
+    - Develop method to detect base64 encoding or excessively long queries in DNS traffic
+        - entropy/regex heuristics to detect base64, cluster based on probability?
+        - long queries should be caught by `dns_cluster.py` if they are relatively longer than other entries
+    - Create argument that allows analyst to specify the number of characters in DNS record to classify it as "long" or "anomalous"
