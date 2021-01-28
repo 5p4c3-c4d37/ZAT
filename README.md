@@ -19,8 +19,10 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 - `cert_checker_ascii_json.py`
     - fix the timestamp for json
     - take IOC file as input
+    - dynamic tailing
 - `tor_and_port_counter_ascii_json.py`
     - Add timestamps
+    - dynamic tailing
 - Develop yara/ZAT functionality
     - see ZAT documentation for examples
 - DNS:
