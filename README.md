@@ -11,7 +11,7 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 ## Usage
 - `python3 dns_clustering.py [-j] [-a] zeek_log_path`
 - `python3 dns_length.py [-j] [-l length] zeek_log_path`
-- `python 3 cert_checker.py [-h] [-j] [infile] [outfile] zeek_log_path`
+- `python3 cert_checker.py [-h] [-j] [infile] [outfile] zeek_log_path`
 - `python3 tor_and_port_counter_ascii_json.py [-h] [-j] [-t] zeek_log_path`
 
 ## Todo
