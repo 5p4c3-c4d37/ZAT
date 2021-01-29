@@ -3,16 +3,18 @@ Files here are derived from the ZAT project from SuperCowPowers - https://github
 
 Purpose: Modifying ZAT python scripts for more tailored use.
 
-`dns_clustering.py` is able to take in both json and ascii format zeek logs (use `-j` for json) and will cluster all entries or just anomalies (use `-a`)
+- `dns_clustering.py` is able to take in both json and ascii format zeek logs (use `-j` for json) and will cluster all entries or just anomalies (use `-a`)
+- `dns_length.py` simply prints out dns entries with answer OR query lengths longer than the specified length `-l`
 
 ## Usage
-`python3 dns_clustering.py [-j] [-a] zeek_log_path`
+- `python3 dns_clustering.py [-j] [-a] zeek_log_path`
+- `python3 dns_length.py [-j] [-l length] zeek_log_path`
 
 ## Todo
 - `dns_clustering.py`
+    - option for user to custom define number of clusters
     - option for just silhouette scoring to determine "optimal" number of clusters
     - option for DBSCAN to recommend number of clusters
-    - option for user to custom define number of clusters
     - optimize contamination parameter for isolation forest and try out "auto" setting
 - `http_clustering.py`
     - Create script to cluster http.log and cluster anomalies in http.log
