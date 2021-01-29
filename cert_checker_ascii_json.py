@@ -1,5 +1,3 @@
-"""Adapted from ZAT project by Brian Wylie of SuperCowPowers - https://github.com/SuperCowPowers/zat"""
-
 from __future__ import print_function
 import os
 import sys
@@ -12,38 +10,8 @@ import pandas as pd
 from zat.log_to_dataframe import LogToDataFrame
 from zat.dataframe_to_matrix import DataFrameToMatrix
 from zat import zeek_log_reader
+from contextlib import redirect_stdout
 
-
-def parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-j', '--json_format',
-            help='Import zeek log in json string format',
-            action='store_true')
-    parser.add_argument('zeek_log_path',
-            type=str,
-            help='Type in location of zeek log')
-    args, commands = parser.parse_known_args()
-    # Check for unknown args
-    if commands:
-        print('Unrecognized args: %s' % commands)
-        sys.exit(1)
-    # Sanity check that this is a x509 log
-    if 'x509' not in args.zeek_log_path:
-        print('This example only works with Zeek x509.log files..')
-        sys.exit(1)
-    # File may have a tilde in it
-    if args.zeek_log_path:
-        args.zeek_log_path = os.path.expanduser(args.zeek_log_path)
-    # Determine json or ascii format
-    if args.json_format:
-        print('**Importing zeek log in json format**')
-        df = import_json(args.zeek_log_path)
-    else:
-        print('**Importing zeek log in ascii format**')
-        print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
-        log_to_df = LogToDataFrame()
-        df = log_to_df.create_dataframe(args.zeek_log_path)
-    return df
 
 def import_json(path):
     # list of json strings, each log entry is a string
@@ -57,14 +25,50 @@ def import_json(path):
 
 
 def main():
-    df = parser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-j', '--json_format',
+            help='Import zeek log in json string format',
+            action='store_true')
+    parser.add_argument('infile', nargs='?',
+            type=argparse.FileType('r'),
+            default=sys.stdin,
+            help='File path to txt IOC File. One IOC per line')
+    parser.add_argument('outfile', nargs='?',
+            type=argparse.FileType('w'),
+            default=sys.stdout,
+            help='Output file and path')
+    parser.add_argument('zeek_log_path',
+            type=str,
+            help='Type in location of zeek log')
+    args, commands = parser.parse_known_args()
+    # Check for unknown args
+    if commands:
+        print('Unrecognized args: %s' % commands)
+        sys.exit(1)
+    # Sanity check that this is a x509 log
+    if 'x509' not in args.zeek_log_path:
+        print('This example only works with Zeek x509.log files..')
+        sys.exit(1)
+    # Files may have a tilde in it
+    if args.zeek_log_path:
+        args.zeek_log_path = os.path.expanduser(args.zeek_log_path)
+    if args.infile:
+        infile = args.infile.read().splitlines()
+        # ioc = infile.read()
+    if args.outfile:
+        outfile = args.outfile
+    # Determine json or ascii format
+    if args.json_format:
+        print('**Importing zeek log in json format**')
+        df = import_json(args.zeek_log_path)
+    else:
+        print('**Importing zeek log in ascii format**')
+        print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
+        log_to_df = LogToDataFrame()
+        df = log_to_df.create_dataframe(args.zeek_log_path)
 
-# Check all the x509 Certs for 'Let's Encrypt'/self-signed for potential phishing/malicious sites
+    # Check all the x509 Certs for 'Let's Encrypt'/self-signed for potential phishing/malicious sites
     # These domains may be spoofed with a certificate issued by 'Let's Encrypt'
-    spoofed_domains = set(['paypal', 'gmail', 'google', 'apple', 'ebay', 'amazon'])
-        
-    # Modification: List out known ioc domains for testing
-    ioc_domains = set(['ioc1', 'ioc2', 'ioc3'])
     # print(df.columns)
     # print(df.index)
     # Run the zeek reader on the x509.log file looking for spoofed domains
@@ -76,27 +80,34 @@ def main():
 
     for timestamp, ID, issuer, subject in field_list:
         # Include above other fields necessary for testing
-            
+        spoofed_domains = set(['paypal', 'gmail', 'google', 'apple', 'ebay', 'amazon'])
+        # print(spoofed_domains)
         if "Let's Encrypt" in issuer:
-
-            # Check if the certificate subject has any spoofed domains
+        # Check if the certificate subject has any spoofed domains
             if any([domain in subject for domain in spoofed_domains]):
-                print('\n<<< Suspicious Certificate Found >>>')
                 subject = subject[3:]
                 issuer = issuer[3:]
-                print('Timestamp: ', timestamp)
-                print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
-
-            # Below are modifications from the original script.
-            elif any([domain in subject for domain in ioc_domains]): # Check against known ioc domains
-                print('\n<<< Suspicious Certificate Found >>>')
-                print('Timestamp: ', timestamp)
-                print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
+                with redirect_stdout(outfile):
+                    print('\n<<< Suspicious Certificate Found >>>')
+                    print('Timestamp: ', timestamp)
+                    print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
 
         if issuer == subject:  # Check for self-signed certificates
-            print('\n <<< Self-Signed Certificate Found >>>')
-            print('Timestamp: ', timestamp)
-            print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
+            subject = subject[3:]
+            issuer = issuer[3:]
+            with redirect_stdout(outfile):
+                print('\n <<< Self-Signed Certificate Found >>>')
+                print('Timestamp: ', timestamp)
+                print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
+
+        if args.infile:
+            ioc_domains = infile
+            # print(ioc_domains)
+            if any([ioc in (subject or issuer) for ioc in ioc_domains]):
+                with redirect_stdout(outfile):
+                    print('\n <<< IOC Found >>>')
+                    print('Timestamp: ', timestamp)
+                    print('ID: {:s} \nIssuer: {:s} \nsubject: {:s}'.format(ID, issuer, subject))
 
 
 if __name__ == '__main__':
