@@ -3,12 +3,16 @@ Files here are derived from the ZAT project from SuperCowPowers - https://github
 
 Purpose: Modifying ZAT python scripts for more tailored use.
 
-- `dns_clustering.py` is able to take in both json and ascii format zeek logs (use `-j` for json) and will cluster all entries or just anomalies (use `-a`)
-- `dns_length.py` simply prints out dns entries with answer OR query lengths longer than the specified length `-l`
+- `dns_clustering.py` is able to take in both json and ascii format zeek logs (use `-j` for json) and will cluster all entries or just anomalies (use `-a`).
+- `dns_length.py` simply prints out dns entries with answer OR query lengths longer than the specified length `-l`.
+- `cert_checker_ascii_json.py` is able to take an input .txt file containg iocs seperated by newlines. It checks the certificate issuer and subject for IOCs, Let's Encrpyt, and self-signed certificates.
+- `tor_and_port_counter_ascii_json.py ` checks the issuer and subject in the ssl.log for tor connections using a regex search. Use `-t` for dynamic tailing (this feature is under construction).
 
 ## Usage
 - `python3 dns_clustering.py [-j] [-a] zeek_log_path`
 - `python3 dns_length.py [-j] [-l length] zeek_log_path`
+- `python 3 cert_checker.py [-h] [-j] [infile] [outfile] zeek_log_path`
+- `python3 tor_and_port_counter_ascii_json.py [-h] [-j] [-t] zeek_log_path`
 
 ## Todo
 - `dns_clustering.py`
@@ -20,7 +24,6 @@ Purpose: Modifying ZAT python scripts for more tailored use.
     - Create script to cluster http.log and cluster anomalies in http.log
 - `cert_checker_ascii_json.py`
     - fix the timestamp for json
-    - take IOC file as input
     - dynamic tailing
 - `tor_and_port_counter_ascii_json.py`
     - Add timestamps
