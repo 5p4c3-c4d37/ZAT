@@ -39,10 +39,16 @@ def parser():
         if args.directory:
             print('**Importing zeek logs from directory in json format**')
             zeek_logs = [os.path.join(args.zeek_log_path, file) for file in os.listdir(args.zeek_log_path)]
+            '''
             df = import_json(zeek_logs[0])
             for log in zeek_logs[1:]:
                 print('**Appending log**')
                 df = df.append(import_json(log))
+            '''
+            logs = []
+            for log in zeek_logs:
+                logs.append(import_json(log))
+            df = pd.concat(logs)
         else:
             print('**Importing zeek log in json format**')
             df = import_json(args.zeek_log_path)
@@ -102,7 +108,7 @@ def main():
 
     ######## DBScan to pick K
     df['cluster_db'] = DBSCAN().fit_predict(zeek_matrix)
-    print('Number of Clusters: {:d}'.format(df['cluster_db'].nunique()))
+    #print('Number of Clusters: {:d}'.format(df['cluster_db'].nunique()))
 
     '''
     scores = []
@@ -121,7 +127,8 @@ def main():
     cluster_groups = df[features+['cluster']].groupby('cluster')
     for key, group in cluster_groups:
         print('\nCluster {:d}: {:d} observations'.format(key, len(group)))
-        print(group.head())
+        #print(group.head())
+        print(group)
     return
 
 if __name__ == "__main__":
