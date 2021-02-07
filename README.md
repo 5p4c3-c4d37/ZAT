@@ -8,11 +8,13 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 - `cert_checker_ascii_json.py` is able to take an input .txt file containg iocs seperated by newlines. It checks the certificate issuer and subject for IOCs, Let's Encrpyt, and self-signed certificates.
 - `tor_and_port_counter_ascii_json.py ` checks the issuer and subject in the ssl.log for tor connections using a regex search. Use `-t` for dynamic tailing (this feature is under construction).
 
+- NEW: [-d] --directory, allows for a directory of like zeek logs to be parsed into a single dataframe for faster analysis
+
 ## Usage
-- `python3 dns_clustering.py [-j] [-a] zeek_log_path`
+- `python3 dns_clustering.py [-j] [-a] [-d] zeek_log_path`
 - `python3 dns_length.py [-j] [-l length] zeek_log_path`
-- `python3 cert_checker.py [-h] [-j] [infile] [outfile] zeek_log_path`
-- `python3 tor_and_port_counter_ascii_json.py [-h] [-j] [-t] zeek_log_path`
+- `python3 cert_checker.py [-h] [-j] [-d] [infile] [outfile] zeek_log_path`
+- `python3 tor_and_port_counter_ascii_json.py [-h] [-j] [-d] [-t] zeek_log_path`
 
 ## Todo
 - `dns_clustering.py`
@@ -23,7 +25,6 @@ Purpose: Modifying ZAT python scripts for more tailored use.
 - `http_clustering.py`
     - Create script to cluster http.log and cluster anomalies in http.log
 - `cert_checker_ascii_json.py`
-    - fix the timestamp for json
     - dynamic tailing
 - `tor_and_port_counter_ascii_json.py`
     - Add timestamps
