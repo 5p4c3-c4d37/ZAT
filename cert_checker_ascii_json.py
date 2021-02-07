@@ -29,6 +29,9 @@ def main():
     parser.add_argument('-j', '--json_format',
             help='Import zeek log in json string format',
             action='store_true')
+    parser.add_argument('-d', '--directory',
+            help='Import zeek logs from directory',
+            action='store_true')
     parser.add_argument('infile', nargs='?',
             type=argparse.FileType('r'),
             default=sys.stdin,
@@ -59,13 +62,32 @@ def main():
         outfile = args.outfile
     # Determine json or ascii format
     if args.json_format:
-        print('**Importing zeek log in json format**')
-        df = import_json(args.zeek_log_path)
+        if args.directory:
+            print('**Importing zeek logs from directory in json format**')
+            zeek_logs = [os.path.join(args.zeek_log_path, file) for file in os.listdir(args.zeek_log_path)]
+            logs = []
+            for log in zeek_logs:
+                logs.append(import_json(log))
+            df = pd.concat(logs)
+        else:
+            print('**Importing zeek log in json format**')
+            df = import_json(args.zeek_log_path)
+        field_list = zip(df['ts'], df['id'], df['certificate_issuer'], df['certificate_subject'])
     else:
-        print('**Importing zeek log in ascii format**')
-        print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
-        log_to_df = LogToDataFrame()
-        df = log_to_df.create_dataframe(args.zeek_log_path)
+        if args.directory:
+            print('**Importing zeek logs from directory in ascii format**')
+            zeek_logs = [os.path.join(args.zeek_log_path, file) for file in os.listdir(args.zeek_log_path)]
+            logs = []
+            log_to_df = LogToDataFrame()
+            for log in zeek_logs:
+                logs.append(log_to_df.create_dataframe(log))
+            df = pd.concat(logs)
+        else:
+            print('**Importing zeek log in ascii format**')
+            print('**Hanging? High chance you are trying to import a log in json format, use -j**')
+            log_to_df = LogToDataFrame()
+            df = log_to_df.create_dataframe(args.zeek_log_path)
+        field_list = zip(df.index, df['id'], df['certificate.issuer'], df['certificate.subject'])
 
     # Check all the x509 Certs for 'Let's Encrypt'/self-signed for potential phishing/malicious sites
     # These domains may be spoofed with a certificate issued by 'Let's Encrypt'
@@ -73,11 +95,6 @@ def main():
     # print(df.index)
     # Run the zeek reader on the x509.log file looking for spoofed domains
     # reader = zeek_log_reader.ZeekLogReader(df, tail=True)  # tail=False to turn off dynamic tailing
-    if '@stream' in df.columns:
-        field_list = zip(df['ts'], df['id'], df['certificate_issuer'], df['certificate_subject'])
-    else:
-        field_list = zip(df.index, df['id'], df['certificate.issuer'], df['certificate.subject'])
-
     for timestamp, ID, issuer, subject in field_list:
         # Include above other fields necessary for testing
         spoofed_domains = set(['paypal', 'gmail', 'google', 'apple', 'ebay', 'amazon'])
