@@ -2,6 +2,7 @@
 
 # Commandline arguments
 import argparse
+import os
 # Entropy Calculation
 import math
 from collections import Counter
@@ -27,19 +28,49 @@ def parser():
     parser.add_argument('-a', '--anomaly',
             help='Perform clustering on anomalies',
             action='store_true')
+    parser.add_argument('-d', '--directory',
+            help='Import zeek logs from directory',
+            action='store_true')
+    parser.add_argument('-c', '--clusters',
+            help='Number of clusters to divide data, default=4',
+            type=int,
+            default=4)
     parser.add_argument('zeek_log_path',
             type=str,
             help='Type in location of zeek log')
     args = parser.parse_args()
     if args.json_format:
-        print('**Importing zeek log in json format**')
-        df = import_json(args.zeek_log_path)
+        if args.directory:
+            print('**Importing zeek logs from directory in json format**')
+            zeek_logs = [os.path.join(args.zeek_log_path, file) for file in os.listdir(args.zeek_log_path)]
+            '''
+            df = import_json(zeek_logs[0])
+            for log in zeek_logs[1:]:
+                print('**Appending log**')
+                df = df.append(import_json(log))
+            '''
+            logs = []
+            for log in zeek_logs:
+                logs.append(import_json(log))
+            df = pd.concat(logs)
+        else:
+            print('**Importing zeek log in json format**')
+            df = import_json(args.zeek_log_path)
     else:
-        print('**Importing zeek log in ascii format**')
-        print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
-        log_to_df = LogToDataFrame()
-        df = log_to_df.create_dataframe(args.zeek_log_path)
-    return df, args.anomaly
+        if args.directory:
+            print('**Importing zeek logs from directory in ascii format**')
+            zeek_logs = [os.path.join(args.zeek_log_path, file) for file in os.listdir(args.zeek_log_path)]
+            logs = []
+            log_to_df = LogToDataFrame()
+            for log in zeek_logs:
+                logs.append(log_to_df.create_dataframe(log))
+            df = pd.concat(logs)
+        else:
+            print('**Importing zeek log in ascii format**')
+            print('**If this hangs for longer than a 17 sec, high chance you are trying to import a log in json format instead, use -j**')
+            log_to_df = LogToDataFrame()
+            df = log_to_df.create_dataframe(args.zeek_log_path)
+    return df, args.anomaly, args.clusters
 
 def import_json(path):
     # list of json strings, each log entry is a string
@@ -56,7 +87,7 @@ def entropy(string):
     return -sum(count/lns * math.log(count/lns, 2) for count in p.values())
 
 def main():
-    df, anomaly = parser()
+    df, anomaly, n_clusters = parser()
 
     ######## Preprocessing
     # lengths and entropy will be calculated and added to the dataframe
@@ -83,11 +114,13 @@ def main():
         df = df[predictions == -1].copy()
         zeek_matrix = to_matrix.fit_transform(odd_df)
 
-    num_clusters = min(len(df), 4)
+    num_clusters = min(len(df), n_clusters)
 
+    '''
     ######## DBScan to pick K
     df['cluster_db'] = DBSCAN().fit_predict(zeek_matrix)
-    print('Number of Clusters: {:d}'.format(df['cluster_db'].nunique()))
+    #print('Number of Clusters: {:d}'.format(df['cluster_db'].nunique()))
+    '''
 
     '''
     scores = []
@@ -106,8 +139,10 @@ def main():
     cluster_groups = df[features+['cluster']].groupby('cluster')
     for key, group in cluster_groups:
         print('\nCluster {:d}: {:d} observations'.format(key, len(group)))
-        print(group.head())
+        # print(group.head())
+        print(group)
     return
+
 
 if __name__ == "__main__":
     main()
